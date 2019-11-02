@@ -48,5 +48,6 @@
   },
   "engines": {
     "node": "8.* || >= 10.*"
-  }
+  },
+  "proxy": "http://server:3000"
 }

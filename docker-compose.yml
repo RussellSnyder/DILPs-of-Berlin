@@ -1,41 +1,54 @@
 version: "2"
 services:
-  database:
-    container_name: database
-    image: mongo
+
+  mongodb:
+    container_name: mongodb
+    build: ./mongo
+    restart: always
     volumes:
-      - ./data:/data/db
+      - ./mongo/data:/data/db
     ports:
       - "27017:27017"
-  server:
-    container_name: server
+
+#  mongo-seed:
+#    container_name: mongo_seed
+#    restart: on-failure
+#    build: mongo
+#    networks:
+#      - dev
+#    depends_on:
+#      - mongodb
+
+  nodeserver:
+    container_name: nodeserver
     restart: always
     build:
       context: server
       dockerfile: ./Dockerfile
     ports:
-      - ${APP_SERVER_PORT}:${APP_SERVER_PORT}
-    expose:
-      - ${APP_SERVER_PORT}
+      - "3000:3000"
     environment:
-      APP_SERVER_PORT: ${APP_SERVER_PORT}
-      API_HOST: ${API_HOST}
+      APP_SERVER_PORT: 3000
+      API_HOST: 3000
     links:
-      - mongo
-  ember:
+      - mongodb
+
+  emberapp:
+    container_name: emberapp
     image: danlynn/ember-cli:3.0.0
     environment:
       CI: "true"
       EMBER_APP_PORT: ${EMBER_APP_PORT}
+      HTTP_PROXY: "http://127.0.0.1:3000"
     volumes:
       - ./frontend:/myapp
       - .bash_history:/root/.bash_history
       - ./frontend/node_modules:/myapp/node_modules
     tmpfs:
       - /myapp/tmp
-    expose:
-      - ${EMBER_APP_PORT}
     ports:
-      - ${EMBER_APP_PORT}:${EMBER_APP_PORT}
+      - "4200:4200"
       - "7020:7020"
       - "7357:7357"
+    links:
+      - nodeserver
